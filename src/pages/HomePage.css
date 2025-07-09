@@ -1,0 +1,126 @@
+.home-container {
+    background-image: url("../assets/Wallpaper_IPLANRIO/Wallpaper/simples_03.png");
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Roboto', sans-serif;
+    padding: 2rem;
+  }
+  
+  .card-wrapper {
+    padding: 40px;
+    border-radius: 20px;
+    display: flex;
+    gap: 8rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+    position: relative;
+  }
+  
+  .card {
+    background-color: rgb(255, 255, 255);
+    padding: 3rem 2rem;
+    border-radius: 16px;
+    width: 360px;
+    min-height: 360px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .card:hover {
+    transform: scale(1.06);
+  }
+  .separator-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #f5f9ff;
+    color: #0F52AF;
+    padding: 1rem 1.5rem;
+    font-weight: 900;
+    border-radius: 20px 10px;
+    font-size: 2rem;
+    z-index: 2;
+  }
+  
+  .card h2 {
+    margin-bottom: 1.5rem;
+    font-size: 1.6rem;
+    color: #2d89ef;
+  }
+  
+  .card p {
+    flex: 1;
+    font-size: 1.1rem;
+    color: #444;
+    margin-bottom: 2rem;
+  }
+  
+  .card button {
+    background: linear-gradient(135deg, #0F52AF, #3869D9, #2AACD7);
+    color: white;
+    padding: 0.9rem 1.4rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .header {
+    position: absolute;
+    top: 1rem;
+    left: 2rem;
+    z-index: 10;
+  }
+  
+  .logo {
+    height: 60px; /* ajuste conforme necessário */
+  }
+  
+  /* Linha divisória vertical */
+  .card-wrapper::before {
+    content: "";
+    position: absolute;
+    top: -40px;
+    height: calc(100% + 80px);
+    width: 4px;
+    background: linear-gradient(to bottom, transparent, rgba(121, 124, 202, 0.2), transparent);
+    left: 50%;
+    transform: translateX(-1px);
+  }
+  
+  
+  @media (max-width: 1115px) {
+    .card-wrapper {
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 40px;
+    }
+  
+    .card-wrapper::before {
+      display: none;
+    }
+    .separator-text {
+    display: none;   
+      }
+      
+  
+    .card {
+      width: 100%;
+    }
+
+    @media (max-width: 700px) {
+        .logo {
+            height: 50px; /* ajuste conforme necessário */
+          }
+  }
+}
