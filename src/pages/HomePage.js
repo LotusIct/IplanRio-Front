@@ -9,9 +9,6 @@ const HomePage = () => {
   const [opcao, setOpcao] = useState(null);
   const [token, setToken] = useState(null);
 
-  // Exemplo: valores fixos ou você pode coletar via formulário
-  const chaveSolicitacao = "chave-exemplo";
-  const idDoNavegador = "id-navegador-exemplo";
 
   const voltarParaHome = () => {
     setOpcao(null);
