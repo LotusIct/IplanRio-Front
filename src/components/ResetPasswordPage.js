@@ -5,40 +5,49 @@ import { IoReturnUpBack } from "react-icons/io5";
 
 const ResetPasswordForm = ({ token, onBack }) => {
   const [form, setForm] = useState({
-    matricula: "", nome: "", cpf: "", email: ""
+    login: "", // novo campo unificado
+    email: ""
   });
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = e =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     // Validação de e-mail
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) {
       return alert("E-mail inválido");
     }
-  
-    // Validação de CPF
-    if (!form.cpf || form.cpf.trim().length < 11) {
-      return alert("CPF inválido ou incompleto");
+
+    if (!form.login || form.login.trim().length === 0) {
+      return alert("Login de Usuário (CPF ou Matrícula) é obrigatório");
     }
-  
-    // Validação de matrícula
-    if (!form.matricula || form.matricula.trim().length === 0) {
-      return alert("Matrícula obrigatória");
+
+    // Detecta tipo de login (CPF ou Matrícula)
+    let cpfValue = "";
+    let matriculaValue = "";
+    const apenasNumeros = form.login.replace(/\D/g, "");
+
+    if (apenasNumeros.length === 11) {
+      cpfValue = apenasNumeros; // CPF detectado
+    } else if (apenasNumeros.length === 9) {
+      matriculaValue = form.login; // Matrícula detectada
+    } else {
+      return alert("Informe um CPF válido (11 dígitos) ou Matrícula válida (9 dígitos).");
     }
-  
+
     const body = {
       recordDefinitionName: "senha.reset:Reset",
       resourceType: "com.bmc.arsys.rx.services.record.domain.RecordInstance",
       fieldInstances: {
-        "536870913": { value: form.email },     // Email
-        "536870914": { value: form.cpf },       // CPF
-        "536870915": { value: form.matricula }  // Matrícula
+        "536870913": { value: form.email }, // Email
+        "536870914": { value: cpfValue },   // CPF (se aplicável)
+        "536870915": { value: matriculaValue } // Matrícula (se aplicável)
       }
     };
-  
+
     try {
       if (!token) {
         return alert("Token não encontrado. Verifique a autenticação.");
@@ -51,48 +60,37 @@ const ResetPasswordForm = ({ token, onBack }) => {
       alert("Ocorreu um erro ao tentar enviar o e-mail. Verifique os dados e tente novamente.");
     }
   };
-  
 
   return (
     <div className="form-container">
       <div className="form-header">
-       
         <h2 className="form-title">Redefinição de Senha</h2>
         <IoReturnUpBack className="back-icon" onClick={onBack} />
       </div>
 
       <form onSubmit={handleSubmit} className="register-form">
         <div className="form-block">
-        <div className="form-block">
           <label>
-            Matrícula
-            <input name="matricula" placeholder="Formato padrão (Ex: 99/123456-7)" onChange={handleChange} required />
+            Login de Usuário (CPF ou Matrícula)
+            <input
+              name="login"
+              placeholder="Digite seu CPF ou Matrícula "
+              onChange={handleChange}
+              required
+            />
+          </label>
+             <label>
+            E-mail corporativo
+            <input
+              name="email"
+              type="email"
+              placeholder="Ex: @prefeitura.rio | @rio.rj.gov.br"
+              onChange={handleChange}
+              required
+            />
           </label>
         </div>
 
-        <div className="form-block">
-          <label>
-            Nome completo
-            <input name="nome" placeholder="Ex: Marcelo Nogueira Junior" onChange={handleChange} required />
-          </label>
-        </div>
-        </div>
-
-        <div className="form-block">
-          <div className="form-block">
-            <label>
-              CPF
-              <input name="cpf" placeholder="Ex: 12345678900" onChange={handleChange} required />
-            </label>
-          </div>
-
-          <div className="form-block">
-            <label>
-              E-mail corporativo
-              <input name="email" type="email" placeholder="Ex: @prefeitura.rio | @rio.rj.gov.br" onChange={handleChange} required />
-            </label>
-          </div>
-        </div>
 
         <button type="submit" className="submit-btn">Solicitar Redefinição</button>
       </form>

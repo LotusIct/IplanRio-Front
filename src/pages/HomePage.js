@@ -40,8 +40,8 @@ const HomePage = () => {
       {!opcao && (
         <div className="card-wrapper">
           <div className="card">
-            <h2>Cadastrar Usuário</h2>
-            <p>Realize o cadastro de um novo usuário no sistema.</p>
+            <h2>Novo Usuário</h2>
+            <p>Solicite seu cadastro no Iplanfácil.</p>
             <button onClick={() => setOpcao("cadastro")}>Cadastrar</button>
           </div>
 
@@ -50,8 +50,8 @@ const HomePage = () => {
           </div>
 
           <div className="card">
-            <h2>Redefinir Senha</h2>
-            <p>Envie uma solicitação para redefinir sua senha.</p>
+            <h2>Esqueci minha senha</h2>
+            <p>Solicite a redefinição da sua senha.</p>
             <button onClick={() => setOpcao("reset")}>Redefinir Senha</button>
           </div>
 
