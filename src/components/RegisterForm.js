@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { cadastrarUsuario, buscarOrgaos } from "../services/api";
 import "./RegisterForm.css"; 
 import { IoReturnUpBack } from "react-icons/io5";
+import Swal from "sweetalert2";
 
 const RegisterForm = ({ token, onBack }) => {
   const [form, setForm] = useState({
@@ -81,12 +82,29 @@ const RegisterForm = ({ token, onBack }) => {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) {
-      return alert("E-mail inválido");
+     Swal.fire({
+  title: "Atenção",
+  text: "E-mail inválido. Verifique o formato.",
+  icon: "warning",
+   background: "#f0f8ff",
+  color: "#333",
+  confirmButtonColor: "#0F419B",
+});
+
     }
 
-    if (!form.nome || !form.cpf || !form.matricula) {
-      return alert("Preencha todos os campos obrigatórios: Nome, CPF e Matrícula.");
-    }
+  if (!form.nome || !form.cpf || !form.matricula) {
+  return Swal.fire({
+    title: "Campos obrigatórios",
+    text: "Preencha todos os campos obrigatórios: Nome, CPF e Matrícula.",
+    icon: "warning",
+     background: "#f0f8ff",
+  color: "#333",
+    confirmButtonColor: "#2086CC", // azul bonito
+    confirmButtonText: "OK"
+  });
+}
+
 
     const body = {
       recordDefinitionName: "senha.reset:Cadastro",
@@ -94,15 +112,15 @@ const RegisterForm = ({ token, onBack }) => {
       fieldInstances: {
         "8": { value: form.nome },
         "536870913": { value: form.email },
-        "536870914": { value: limparMascara(form.cpf) },       // cpf sem máscara
+        "536870914": { value: limparMascara(form.cpf) },       
         "536870915": { value: form.matricula },
-        "536870916": { value: limparMascara(form.tel1) },      // tel1 sem máscara
+        "536870916": { value: limparMascara(form.tel1) },      
         "536870917": { value: form.orgao },
         "536870918": { value: form.endereco },
         "536870919": { value: form.bairro },
         "536870922": { value: form.complemento },
-        "536870923": { value: form.emailAlternativo },
-        "536870924": { value: limparMascara(form.tel2) }       // tel2 sem máscara
+        "536870925": { value: form.emailAlternativo },
+        "536870924": { value: limparMascara(form.tel2) }      
       }
     };
 
@@ -112,10 +130,27 @@ const RegisterForm = ({ token, onBack }) => {
 
     try {
       await cadastrarUsuario(token, body);
-      alert("Usuário cadastrado com sucesso. Verifique seu e-mail.");
+      Swal.fire({
+  title: "Cadastro realizado!",
+  text: "Usuário cadastrado com sucesso. Verifique seu e-mail.",
+  icon: "success",
+  background: "#f0f8ff",
+  color: "#333",
+  confirmButtonColor: "#308FD8", // azul bonito
+  confirmButtonText: "OK"
+});
+
     } catch (err) {
       console.error("Erro ao cadastrar usuário:", err);
-      alert("Erro ao cadastrar usuário. Tente novamente.");
+      Swal.fire({
+  title: "Erro!",
+  text: "Não foi possível cadastrar o usuário. Tente novamente.",
+  icon: "error",
+ background: "#f0f8ff",
+  color: "#333",
+  confirmButtonColor: "#0F419B", // vermelho
+  confirmButtonText: "Entendi"
+});
     }
   };
 

@@ -100,3 +100,49 @@ export const buscarOrgaos = async (token) => {
     throw new Error("Erro ao buscar órgãos");
   }
 };
+
+export const validarEmailExistente = async (token, email) => {
+  const url = `https://iplanfacil-dev-is.onbmc.com/api/rx/application/datapage/?dataPageType=com.bmc.arsys.rx.application.record.datapage.RecordInstanceDataPageQuery&pageSize=500&startIndex=0&recorddefinition=senha.reset:Person&536870914=${encodeURIComponent(email)}`;
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `AR-JWT ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    // Se retornar lista vazia, e-mail não existe
+    if (!response.data.data || response.data.data.length === 0) {
+      return false;
+    }
+
+    return true; // E-mail existe
+  } catch (error) {
+    console.error("Erro ao validar e-mail:", error);
+    throw new Error("Falha ao validar e-mail");
+  }
+};
+
+export const solicitarAlteracaoEmail = async (token, body) => {
+  const bodyComBrowserId = montarBodyComBrowserId(body);
+
+  try {
+    const response = await API.post(
+      `/rx/application/record/recordinstance`,
+      bodyComBrowserId,
+      {
+        headers: {
+          Authorization: `AR-JWT ${token}`,
+          "X-Requested-By": "XMLHttpRequest",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao solicitar alteração de e-mail/telefone", error);
+    throw new Error("Falha ao solicitar alteração de e-mail/telefone");
+  }
+};
