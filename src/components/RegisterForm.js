@@ -7,14 +7,14 @@ import Swal from "sweetalert2";
 const RegisterForm = ({ token, onBack }) => {
   const [form, setForm] = useState({
     matricula: "", nome: "", cpf: "", email: "", orgao: "",
-    endereco: "", complemento: "", bairro: "", tel1: "", emailAlternativo: "",
-    tel2: ""
+    endereco: "", complemento: "", bairro: "", municipio: "", cep: "", uf: "",
+    tel1: "", emailAlternativo: "", tel2: ""
   });
 
   const [orgaos, setOrgaos] = useState([]);  
   const [loadingOrgaos, setLoadingOrgaos] = useState(false);
 
-  // Funções para mascarar CPF e Telefone (formato brasileiro)
+  // Máscaras para exibição
   const formatCPF = (value) => {
     const digits = value.replace(/\D/g, "").slice(0, 11);
     return digits
@@ -26,131 +26,97 @@ const RegisterForm = ({ token, onBack }) => {
   const formatTelefone = (value) => {
     const digits = value.replace(/\D/g, "").slice(0, 11);
     if (digits.length <= 10) {
-      // Formato telefone fixo ou celular 10 dígitos: (99) 9999-9999
-      return digits
-        .replace(/^(\d{2})(\d)/, "($1) $2")
-        .replace(/(\d{4})(\d)/, "$1-$2");
+      return digits.replace(/^(\d{2})(\d)/, "($1) $2").replace(/(\d{4})(\d)/, "$1-$2");
     } else {
-      // Formato celular 11 dígitos: (99) 99999-9999
-      return digits
-        .replace(/^(\d{2})(\d)/, "($1) $2")
-        .replace(/(\d{5})(\d)/, "$1-$2");
+      return digits.replace(/^(\d{2})(\d)/, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
     }
   };
 
-  // Remove máscara - só números
+  const formatCEP = (value) => {
+    const digits = value.replace(/\D/g, "").slice(0, 8);
+    return digits.length > 5 ? digits.slice(0,5) + "-" + digits.slice(5) : digits;
+  };
+
+  const formatMatricula = (value) => {
+    const digits = value.replace(/\D/g, "").slice(0, 9);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 8) return digits.slice(0, 2) + "/" + digits.slice(2);
+    return digits.slice(0, 2) + "/" + digits.slice(2, 8) + "-" + digits.slice(8);
+  };
+
+  // Remove máscara para envio
   const limparMascara = (valor) => valor.replace(/\D/g, "");
 
-  // Manipula mudanças no form, aplicando máscara nos campos cpf, tel1 e tel2
+  // Handle change
   const handleChange = (e) => {
     let { name, value } = e.target;
-
-    if (name === "cpf") {
-      value = formatCPF(value);
-    } else if (name === "tel1" || name === "tel2") {
-      value = formatTelefone(value);
-    }
-
+    if (name === "cpf") value = formatCPF(value);
+    if (name === "tel1" || name === "tel2") value = formatTelefone(value);
+    if (name === "matricula") value = formatMatricula(value);
+    if (name === "cep") value = formatCEP(value);
     setForm({ ...form, [name]: value });
   };
 
+  // Buscar órgãos
   useEffect(() => {
     const fetchOrgaos = async () => {
-      if (!token) return;  
-
+      if (!token) return;
       setLoadingOrgaos(true);
       try {
         const response = await buscarOrgaos(token);
-        if (response.entries && response.entries.length > 0) {
-          const listaOrgaos = response.entries.map(entry => entry.values.Company);
-          setOrgaos(listaOrgaos);
-        } else {
-          setOrgaos([]);
-        }
+        const listaOrgaos = response.entries?.map(e => e.values.Company) || [];
+        setOrgaos(listaOrgaos);
       } catch (err) {
         console.error("Erro ao buscar órgãos:", err);
         setOrgaos([]);
       }
       setLoadingOrgaos(false);
     };
-
     fetchOrgaos();
   }, [token]);
 
+  // Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email)) {
-     Swal.fire({
-  title: "Atenção",
-  text: "E-mail inválido. Verifique o formato.",
-  icon: "warning",
-   background: "#f0f8ff",
-  color: "#333",
-  confirmButtonColor: "#0F419B",
-});
-
+    // Validação básica
+    if (!form.nome || !form.cpf || !form.matricula || !form.tel1 || !form.orgao || !form.endereco || !form.bairro || !form.municipio || !form.cep || !form.uf || !form.email) {
+      return Swal.fire({ title: "Campos obrigatórios", text: "Preencha todos os campos obrigatórios.", icon: "warning", confirmButtonColor: "#2086CC" });
     }
 
-  if (!form.nome || !form.cpf || !form.matricula) {
-  return Swal.fire({
-    title: "Campos obrigatórios",
-    text: "Preencha todos os campos obrigatórios: Nome, CPF e Matrícula.",
-    icon: "warning",
-     background: "#f0f8ff",
-  color: "#333",
-    confirmButtonColor: "#2086CC", // azul bonito
-    confirmButtonText: "OK"
-  });
-}
-
-
+    // Monta body exatamente igual ao Postman
     const body = {
+      id: "",
+      displayId: "",
       recordDefinitionName: "senha.reset:Cadastro",
       resourceType: "com.bmc.arsys.rx.services.record.domain.RecordInstance",
+      permittedGroupsBySecurityLabels: {},
+      permittedUsersBySecurityLabels: {},
+      permittedRolesBySecurityLabels: {},
       fieldInstances: {
-        "8": { value: form.nome },
-        "536870913": { value: form.email },
-        "536870914": { value: limparMascara(form.cpf) },       
-        "536870915": { value: form.matricula },
-        "536870916": { value: limparMascara(form.tel1) },      
-        "536870917": { value: form.orgao },
-        "536870918": { value: form.endereco },
-        "536870919": { value: form.bairro },
-        "536870922": { value: form.complemento },
-        "536870925": { value: form.emailAlternativo },
-        "536870924": { value: limparMascara(form.tel2) }      
+        "8": { id: 8, permissionType: "CHANGE", resourceType: "com.bmc.arsys.rx.services.record.domain.FieldInstance", value: form.nome },
+        "536870913": { id: 536870913, value: form.email },
+        "536870914": { id: 536870914, value: limparMascara(form.cpf) },
+        "536870915": { id: 536870914, value: limparMascara(form.matricula) },
+        "536870916": { id: 536870914, value: limparMascara(form.tel1) },
+        "536870917": { id: 536870917, value: form.orgao },
+        "536870918": { id: 536870918, value: form.endereco },
+        "536870919": { id: 536870919, value: form.bairro },
+        "536870920": { id: 536870920, value: form.municipio },
+        "536870921": { id: 536870921, value: limparMascara(form.cep) },
+        "536870922": { id: 536870921, value: form.complemento },
+        "536870923": { id: 536870921, value: form.uf },
+        "536870924": { id: 536870924, value: limparMascara(form.tel2) },      
+        "536870925": { id: 536870925, value: form.emailAlternativo } 
       }
     };
 
-    if (!token) {
-      return alert("Token não encontrado. Verifique a autenticação.");
-    }
-
     try {
       await cadastrarUsuario(token, body);
-      Swal.fire({
-  title: "Cadastro realizado!",
-  text: "Usuário cadastrado com sucesso. Verifique seu e-mail.",
-  icon: "success",
-  background: "#f0f8ff",
-  color: "#333",
-  confirmButtonColor: "#308FD8", // azul bonito
-  confirmButtonText: "OK"
-});
-
+      Swal.fire({ title: "Cadastro realizado!", text: "Usuário cadastrado com sucesso.", icon: "success", confirmButtonColor: "#308FD8" });
     } catch (err) {
       console.error("Erro ao cadastrar usuário:", err);
-      Swal.fire({
-  title: "Erro!",
-  text: "Não foi possível cadastrar o usuário. Tente novamente.",
-  icon: "error",
- background: "#f0f8ff",
-  color: "#333",
-  confirmButtonColor: "#0F419B", // vermelho
-  confirmButtonText: "Entendi"
-});
+      Swal.fire({ title: "Erro!", text: "Não foi possível cadastrar o usuário.", icon: "error", confirmButtonColor: "#0F419B" });
     }
   };
 
@@ -163,145 +129,61 @@ const RegisterForm = ({ token, onBack }) => {
 
       <form className="register-form" onSubmit={handleSubmit}>
         <div className="form-block">
-          <label>
-            Matrícula*  
-            <input
-              name="matricula"
-              placeholder="Formato padrão (Ex: 99/123456-7)"
-              onChange={handleChange}
-              required
-              value={form.matricula}
-            />
+          <label>Matrícula*  
+            <input name="matricula" placeholder="99/123456-7" onChange={handleChange} value={form.matricula} required />
           </label>
-
-          <label>
-            Nome completo*  
-            <input
-              name="nome"
-              placeholder="Ex: Marcelo Nogueira Junior"
-              onChange={handleChange}
-              required
-              value={form.nome}
-            />
+          <label>Nome completo*  
+            <input name="nome" placeholder="Ex: Marcelo Nogueira Junior" onChange={handleChange} value={form.nome} required />
           </label>
-
-          <label>
-            CPF*  
-            <input
-              name="cpf"
-              placeholder="Ex: 123.456.789-00"
-              onChange={handleChange}
-              maxLength={14}
-              required
-              value={form.cpf}
-            />
+          <label>CPF*  
+            <input name="cpf" placeholder="123.456.789-00" maxLength={14} onChange={handleChange} value={form.cpf} required />
           </label>
-
-          <label>
-            Telefone principal*  
-            <input
-              name="tel1"
-              placeholder="Ex: (21) 99999-0000"
-              onChange={handleChange}
-              maxLength={15}
-              required
-              value={form.tel1}
-            />
+          <label>Telefone principal*  
+            <input name="tel1" placeholder="(21) 99999-0000" maxLength={15} onChange={handleChange} value={form.tel1} required />
           </label>
         </div>
 
         <div className="form-block">
-          <label>
-            E-mail principal*  
-            <input
-              name="email"
-              type="email"
-              placeholder="Ex: @prefeitura.rio | @rio.rj.gov.br"
-              onChange={handleChange}
-              required
-              value={form.email}
-            />
+          <label>E-mail principal*  
+            <input name="email" type="email" placeholder="@prefeitura.rio" onChange={handleChange} value={form.email} required />
           </label>
-
-          <label>
-            Órgão (lotação)*
-            {loadingOrgaos ? (
-              <p>Carregando órgãos...</p>
-            ) : (
-              <select
-                name="orgao"
-                value={form.orgao}
-                onChange={handleChange}
-                required
-              >
-                <option value="" disabled hidden>Selecione sua lotação atual</option>
-                {orgaos.length > 0 ? (
-                  orgaos.map((orgao, index) => (
-                    <option key={index} value={orgao}>{orgao}</option>
-                  ))
-                ) : (
-                  <option disabled>Nenhum órgão disponível</option>
-                )}
+          <label>Órgão (lotação)*  
+            {loadingOrgaos ? <p>Carregando órgãos...</p> : (
+              <select name="orgao" value={form.orgao} onChange={handleChange} required>
+                <option value="" disabled hidden>Selecione</option>
+                {orgaos.map((orgao, idx) => <option key={idx} value={orgao}>{orgao}</option>)}
               </select>
             )}
           </label>
         </div>
 
         <div className="form-block">
-          <label>
-            Endereço do local de trabalho*  
-            <input
-              name="endereco"
-              placeholder="Ex: Av das Américas, 1538"
-              onChange={handleChange}
-              required
-              value={form.endereco}
-            />
+          <label>Endereço do local de trabalho*  
+            <input name="endereco" placeholder="Ex: Av das Américas, 1538" onChange={handleChange} value={form.endereco} required />
           </label>
-
-          <label>
-            Complemento
-            <input
-              name="complemento"
-              placeholder="Ex: Bloco A, apto 101"
-              onChange={handleChange}
-              value={form.complemento}
-            />
+          <label>Complemento  
+            <input name="complemento" placeholder="Bloco A, apto 101" onChange={handleChange} value={form.complemento} />
           </label>
-
-          <label>
-            Bairro*  
-            <input
-              name="bairro"
-              placeholder="Ex: Barra da Tijuca"
-              onChange={handleChange}
-              required
-              value={form.bairro}
-            />
+          <label>Bairro*  
+            <input name="bairro" placeholder="Ex: Barra da Tijuca" onChange={handleChange} value={form.bairro} required />
+          </label>
+          <label>Município*  
+            <input name="municipio" placeholder="Ex: Rio de Janeiro" onChange={handleChange} value={form.municipio} required />
+          </label>
+          <label>CEP*  
+            <input name="cep" placeholder="Ex: 12345-678" onChange={handleChange} value={form.cep} required />
+          </label>
+          <label>UF*  
+            <input name="uf" placeholder="Ex: RJ" onChange={handleChange} value={form.uf} required />
           </label>
         </div>
 
         <div className="form-block">
-          <label>
-            E-mail alternativo
-            <input
-              name="emailAlternativo"
-              type="email"
-              placeholder="Ex: usuario@gmail.com"
-              onChange={handleChange}
-              value={form.emailAlternativo}
-            />
+          <label>E-mail alternativo  
+            <input name="emailAlternativo" type="email" placeholder="usuario@gmail.com" onChange={handleChange} value={form.emailAlternativo} />
           </label>
-
-          <label>
-            Telefone alternativo
-            <input
-              name="tel2"
-              placeholder="Ex: (21) 98888-1111"
-              onChange={handleChange}
-              maxLength={15}
-              value={form.tel2}
-            />
+          <label>Telefone alternativo  
+            <input name="tel2" placeholder="(21) 98888-1111" maxLength={15} onChange={handleChange} value={form.tel2} />
           </label>
         </div>
 

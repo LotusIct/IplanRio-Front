@@ -19,8 +19,15 @@ export const montarBodyComBrowserId = (outrosCampos) => {
   };
 };
 
-const API = axios.create({
+/* const API = axios.create({
   baseURL: "https://iplanfacil-dev-restapi.onbmc.com/api",
+  headers: {
+    "Content-Type": "application/json",
+    "X-Requested-By": "XMLHttpRequest"
+  }
+}); */
+const API = axios.create({
+  baseURL: "/api",
   headers: {
     "Content-Type": "application/json",
     "X-Requested-By": "XMLHttpRequest"
@@ -31,23 +38,30 @@ export const login = async (email, senha) => {
   const data = new URLSearchParams();
   data.append("username", email);
   data.append("password", senha);
-  return await axios.post(
-    `${API.defaults.baseURL}/jwt/login`,
-    data,
-    { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
-  );
+  // return await axios.post(
+  //   `${API.defaults.baseURL}/jwt/login`,
+  //   data,
+  //   { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+  // );
+  return await axios.post(`/api/jwt/login`, data, {
+  headers: { "Content-Type": "application/x-www-form-urlencoded" }
+});
+
 };
 
 export const cadastrarUsuario = async (token, body) => {
-  const bodyComBrowserId = montarBodyComBrowserId(body);
-
   try {
-    const response = await API.post(`/rx/application/record/recordinstance`, bodyComBrowserId, {
-      headers: { Authorization: `AR-JWT ${token}` }
-    });
+    // envia o body exatamente como foi montado
+    const response = await API.post(
+      `/rx/application/record/recordinstance`,
+      body,
+      {
+        headers: { Authorization: `AR-JWT ${token}` },
+      }
+    );
     return response.data;
   } catch (error) {
-    console.error("Erro ao cadastrar usuário", error);
+    console.error("Erro ao cadastrar usuário", error.response?.data || error);
     throw new Error("Falha ao cadastrar usuário");
   }
 };
@@ -102,35 +116,30 @@ export const buscarOrgaos = async (token) => {
 };
 
 export const validarEmailExistente = async (token, email) => {
-  const url = `https://iplanfacil-dev-is.onbmc.com/api/rx/application/datapage/?dataPageType=com.bmc.arsys.rx.application.record.datapage.RecordInstanceDataPageQuery&pageSize=500&startIndex=0&recorddefinition=senha.reset:Person&536870914=${encodeURIComponent(email)}`;
-
   try {
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `AR-JWT ${token}`,
-        "Content-Type": "application/json"
-      }
+    const response = await API.get(`/rx/application/datapage`, {
+      params: {
+        dataPageType: "com.bmc.arsys.rx.application.record.datapage.RecordInstanceDataPageQuery",
+        pageSize: 500,
+        startIndex: 0,
+        recorddefinition: "senha.reset:Person",
+        536870914: email
+      },
+      headers: { Authorization: `AR-JWT ${token}` }
     });
-
-    // Se retornar lista vazia, e-mail não existe
-    if (!response.data.data || response.data.data.length === 0) {
-      return false;
-    }
-
-    return true; // E-mail existe
+    return response.data.data && response.data.data.length > 0;
   } catch (error) {
     console.error("Erro ao validar e-mail:", error);
     throw new Error("Falha ao validar e-mail");
   }
 };
 
-export const solicitarAlteracaoEmail = async (token, body) => {
-  const bodyComBrowserId = montarBodyComBrowserId(body);
 
+export const solicitarAlteracaoEmail = async (token, body) => {
   try {
     const response = await API.post(
       `/rx/application/record/recordinstance`,
-      bodyComBrowserId,
+      body, // envia o body direto sem modificar
       {
         headers: {
           Authorization: `AR-JWT ${token}`,
@@ -146,3 +155,4 @@ export const solicitarAlteracaoEmail = async (token, body) => {
     throw new Error("Falha ao solicitar alteração de e-mail/telefone");
   }
 };
+

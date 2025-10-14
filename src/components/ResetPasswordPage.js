@@ -7,6 +7,8 @@ import {
 import "./ResetPasswordForm.css";
 import { IoReturnUpBack } from "react-icons/io5";
 import Swal from "sweetalert2";
+import alertaIcon from '../assets/warning.png'; // ajuste o caminho conforme sua estrutura
+import { IMaskInput } from 'react-imask';
 
 
 const ResetPasswordForm = ({ token, onBack }) => {
@@ -40,7 +42,7 @@ const ResetPasswordForm = ({ token, onBack }) => {
     title: "E-mail inválido",
     text: "Verifique o formato do e-mail informado.",
     icon: "warning",
-     background: "#f0f8ff",
+     background: "#ffffffff",
   color: "#333",
     confirmButtonColor: "#2086CC",
     confirmButtonText: "OK"
@@ -52,7 +54,7 @@ const ResetPasswordForm = ({ token, onBack }) => {
     title: "Login obrigatório",
     text: "Informe o CPF ou Matrícula para continuar.",
     icon: "warning",
-     background: "#f0f8ff",
+     background: "#ffffffff",
   color: "#333",
     confirmButtonColor: "#2086CC",
     confirmButtonText: "OK"
@@ -69,7 +71,7 @@ const ResetPasswordForm = ({ token, onBack }) => {
     title: "Dados inválidos",
     text: "Informe um CPF válido (11 dígitos) ou Matrícula válida (9 dígitos).",
     icon: "error",
-     background: "#f0f8ff",
+     background: "#ffffffff",
   color: "#333",
     confirmButtonColor: "#0F419B",
     confirmButtonText: "Entendi"
@@ -80,7 +82,7 @@ const ResetPasswordForm = ({ token, onBack }) => {
     title: "Token ausente",
     text: "Token não encontrado. Verifique a autenticação.",
     icon: "error",
-     background: "#f0f8ff",
+     background: "#ffffffff",
   color: "#333",
     confirmButtonColor: "#0F419B",
     confirmButtonText: "Entendi"
@@ -112,7 +114,7 @@ const ResetPasswordForm = ({ token, onBack }) => {
     title: "E-mail enviado!",
     text: "O link de redefinição foi enviado com sucesso.",
     icon: "success",
-    background: "#f0f8ff",
+    background: "#ffffffff",
   color: "#333",
     confirmButtonColor: "#2086CC",
     confirmButtonText: "OK"
@@ -123,7 +125,7 @@ const ResetPasswordForm = ({ token, onBack }) => {
     title: "Erro!",
     text: "Ocorreu um erro ao processar sua solicitação. Verifique os dados e tente novamente.",
     icon: "error",
-    background: "#f0f8ff",
+    background: "#ffffffff",
   color: "#333",
     confirmButtonColor: "#0F419B",
     confirmButtonText: "Entendi"
@@ -132,49 +134,78 @@ const ResetPasswordForm = ({ token, onBack }) => {
   };
 
   const handleSolicitarAlteracao = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const { cpf, matricula, telefone, telefoneAlternativo, emailAlternativo } = alteracaoForm;
+  const { loginModal, telefone, telefoneAlternativo, emailAlternativo } = alteracaoForm;
 
-    try {
-      const bodyAlteracao = {
-        recordDefinitionName: "senha.reset:CadastroEmail",
-        resourceType: "com.bmc.arsys.rx.services.record.domain.RecordInstance",
-        fieldInstances: {
-          "8": { id: 8, value: form.login },
-          "536870913": { id: 536870913, value: form.email },
-          "536870914": { id: 536870914, value: cpf },
-          "536870915": { id: 536870915, value: matricula },
-          "536870916": { id: 536870916, value: telefone },
-          "536870924": { id: 536870924, value: telefoneAlternativo },
-          "536870925": { id: 536870925, value: emailAlternativo },
-        },
-      };
+  if (!loginModal || loginModal.trim().length === 0) {
+    return Swal.fire({
+      title: "CPF ou Matrícula obrigatório",
+      text: "Preencha o campo CPF ou Matrícula.",
+      icon: "warning",
+      background: "#ffffffff",
+      color: "#333",
+      confirmButtonColor: "#2086CC",
+      confirmButtonText: "OK"
+    });
+  }
 
-      await solicitarAlteracaoEmail(token, bodyAlteracao);
-      Swal.fire({
-  title: "Solicitação enviada!",
-  text: "Atualização de e-mail/telefone realizada com sucesso.",
-  icon: "success",
-   background: "#f0f8ff",
-  color: "#333",
-  confirmButtonColor: "#2086CC",
-  confirmButtonText: "OK"
-});
-      setShowModal(false);
-    } catch (err) {
-      console.error("Erro ao solicitar alteração:", err);
-      Swal.fire({
-  title: "Erro!",
-  text: "Não foi possível enviar a solicitação. Tente novamente.",
-  icon: "error",
-   background: "#f0f8ff",
-  color: "#333",
-  confirmButtonColor: "#0F419B",
-  confirmButtonText: "Entendi"
-});
-    }
-  };
+  const apenasNumeros = loginModal.replace(/\D/g, "");
+  let cpfValue = "";
+  let matriculaValue = "";
+
+  if (apenasNumeros.length === 11) cpfValue = apenasNumeros;
+  else if (apenasNumeros.length === 9) matriculaValue = loginModal;
+  else return Swal.fire({
+    title: "Dados inválidos",
+    text: "Informe um CPF válido (11 dígitos) ou Matrícula válida (9 dígitos).",
+    icon: "error",
+    background: "#ffffffff",
+    color: "#333",
+    confirmButtonColor: "#0F419B",
+    confirmButtonText: "Entendi"
+  });
+
+  try {
+    const bodyAlteracao = {
+      recordDefinitionName: "senha.reset:CadastroEmail",
+      resourceType: "com.bmc.arsys.rx.services.record.domain.RecordInstance",
+      fieldInstances: {
+        "8": { id: 8, value: loginModal },
+        "536870913": { id: 536870913, value: form.email }, // e-mail original
+        "536870914": { id: 536870914, value: cpfValue },
+        "536870915": { id: 536870914, value: matriculaValue },
+        "536870916": { id: 536870914, value: telefone },
+        "536870924": { id: 536870924, value: telefoneAlternativo },
+        "536870925": { id: 536870925, value: emailAlternativo }, // e-mail alternativo
+      },
+    };
+
+    await solicitarAlteracaoEmail(token, bodyAlteracao);
+    Swal.fire({
+      title: "Solicitação enviada!",
+      text: "Atualização de e-mail/telefone realizada com sucesso.",
+      icon: "success",
+      background: "#ffffffff",
+      color: "#333",
+      confirmButtonColor: "#2086CC",
+      confirmButtonText: "OK"
+    });
+    setShowModal(false);
+  } catch (err) {
+    console.error("Erro ao solicitar alteração:", err);
+    Swal.fire({
+      title: "Erro!",
+      text: "Não foi possível enviar a solicitação. Tente novamente.",
+      icon: "error",
+      background: "#ffffffff",
+      color: "#333",
+      confirmButtonColor: "#0F419B",
+      confirmButtonText: "Entendi"
+    });
+  }
+};
+
 
   return (
     <div className="form-container">
@@ -212,67 +243,92 @@ const ResetPasswordForm = ({ token, onBack }) => {
       </form>
 
       {/* 🔹 Modal de alteração de e-mail */}
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>O e-mail informado não corresponde ao cadastrado</h3>
-            <p>Deseja solicitar a atualização do cadastro de e-mail e telefone?</p>
+{showModal && (
+  <div className="modal-overlay">
+    <div className="modal">
+     <div className="background" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+  <img src={alertaIcon} alt="Alerta" style={{ width: '60px', height: '60px', marginLeft: '20px' }} />
+  <h3>O e-mail informado não corresponde ao cadastrado!</h3>
+</div>
 
-            <form onSubmit={handleSolicitarAlteracao} className="modal-form">
-              <label>
-                CPF
-                <input
-                  name="cpf"
-                  placeholder="Digite seu CPF (opcional)"
-                  onChange={handleAlteracaoChange}
-                />
-              </label>
-              <label>
-                Matrícula
-                <input
-                  name="matricula"
-                  placeholder="Digite sua Matrícula (opcional)"
-                  onChange={handleAlteracaoChange}
-                />
-              </label>
-              <label>
-                Telefone
-                <input
-                  name="telefone"
-                  placeholder="(21) 99999-9999"
-                  onChange={handleAlteracaoChange}
-                />
-              </label>
-              <label>
-                Telefone Alternativo
-                <input
-                  name="telefoneAlternativo"
-                  placeholder="(21) 98888-8888"
-                  onChange={handleAlteracaoChange}
-                />
-              </label>
-              <label>
-                E-mail Alternativo
-                <input
-                  name="emailAlternativo"
-                  type="email"
-                  placeholder="Digite um e-mail alternativo"
-                  onChange={handleAlteracaoChange}
-                />
-              </label>
+      <div className="modular">
+        <p>Deseja solicitar a atualização do cadastro de e-mail e telefone?</p>
 
-              <div className="modal-actions">
-                <button type="button" onClick={() => setShowModal(false)} className="cancel-btn">
-                  Cancelar
-                </button>
-                <button type="submit" className="confirm-btn">
-                  Enviar Solicitação
-                </button>
-              </div>
-            </form>
-          </div>
+      <form onSubmit={handleSolicitarAlteracao} className="modal-form">
+        <label>
+          CPF ou Matrícula
+          <input
+            name="loginModal"
+            placeholder="Digite seu CPF ou Matrícula"
+            onChange={(e) =>
+              setAlteracaoForm({ ...alteracaoForm, loginModal: e.target.value })
+            }
+          />
+        </label>
+
+        <label>
+          E-mail
+          <input
+            name="emailOriginal"
+            type="email"
+            value={alteracaoForm.emailOriginal || form.email}
+            onChange={(e) =>
+              setAlteracaoForm({ ...alteracaoForm, emailOriginal: e.target.value })
+            }
+            placeholder="Digite seu e-mail"
+          />
+        </label>
+
+<label>
+  Telefone
+  <IMaskInput
+    mask="(00) 00000-0000"
+    value={alteracaoForm.telefone}
+    onAccept={(value) => setAlteracaoForm({ ...alteracaoForm, telefone: value })}
+    placeholder="(21) 99999-9999"
+  />
+</label>
+
+<label>
+  Telefone Alternativo
+  <IMaskInput
+    mask="(00) 00000-0000"
+    value={alteracaoForm.telefoneAlternativo}
+    onAccept={(value) => setAlteracaoForm({ ...alteracaoForm, telefoneAlternativo: value })}
+    placeholder="(21) 98888-8888"
+  />
+</label>
+
+
+        <label>
+          E-mail Alternativo
+          <input
+            name="emailAlternativo"
+            type="email"
+            placeholder="Digite um e-mail alternativo"
+            onChange={handleAlteracaoChange}
+          />
+        </label>
+
+        <div className="modal-actions">
+          <button
+            type="button"
+            onClick={() => setShowModal(false)}
+            className="cancel-btn"
+          >
+            Cancelar
+          </button>
+          <button type="submit" className="confirm-btn">
+            Enviar Solicitação
+          </button>
         </div>
-      )}
+      </form>
+      </div>
+    </div>
+  </div>
+)}
+
+
     </div>
   );
 };

@@ -15,18 +15,28 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    const fetchToken = async () => {
-      try {
-        const response = await login("IntegracaoLogin", "P0rt@lS3nha");
-        if (response.data && response.data.token) {
-          setToken(response.data.token); 
-        } else {
-          console.error("Token não encontrado no login");
-        }
-      } catch (error) {
-        console.error("Falha no login", error);
-      }
-    };
+   const fetchToken = async () => {
+  try {
+    const response = await login("IntegracaoLogin", "P0rt@lS3nha");
+    console.log("Resposta do login:", response.data); // 👈 adiciona isso
+
+   const token =
+  typeof response.data === "string"
+    ? response.data
+    : response.data?.token || response.data?.["AR-JWT"];
+
+if (token) {
+  setToken(token);
+  console.log("Token obtido com sucesso:", token);
+} else {
+  console.error("Token não encontrado no login. Resposta:", response.data);
+}
+
+  } catch (error) {
+    console.error("Falha no login", error);
+  }
+};
+
 
     fetchToken();
   }, []);
