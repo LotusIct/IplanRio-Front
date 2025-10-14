@@ -19,33 +19,33 @@ export const montarBodyComBrowserId = (outrosCampos) => {
   };
 };
 
-/* const API = axios.create({
-  baseURL: "https://iplanfacil-dev-restapi.onbmc.com/api",
-  headers: {
-    "Content-Type": "application/json",
-    "X-Requested-By": "XMLHttpRequest"
-  }
-}); */
 const API = axios.create({
-  baseURL: "/api",
+  baseURL: process.env.REACT_APP_API_URL || "/api",
   headers: {
     "Content-Type": "application/json",
     "X-Requested-By": "XMLHttpRequest"
   }
 });
 
+/* const API = axios.create({
+  baseURL: "/api",
+  headers: {
+    "Content-Type": "application/json",
+    "X-Requested-By": "XMLHttpRequest"
+  }
+}); */
+
 export const login = async (email, senha) => {
   const data = new URLSearchParams();
   data.append("username", email);
   data.append("password", senha);
-  // return await axios.post(
-  //   `${API.defaults.baseURL}/jwt/login`,
-  //   data,
-  //   { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
-  // );
-  return await axios.post(`/api/jwt/login`, data, {
+return await API.post('/jwt/login', data, {
   headers: { "Content-Type": "application/x-www-form-urlencoded" }
 });
+
+/*   return await axios.post(`/api/jwt/login`, data, {
+  headers: { "Content-Type": "application/x-www-form-urlencoded" }
+}); */
 
 };
 
