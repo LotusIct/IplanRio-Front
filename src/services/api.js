@@ -20,20 +20,14 @@ export const montarBodyComBrowserId = (outrosCampos) => {
 };
 
 const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "/api",
+  baseURL: "/api", 
   headers: {
     "Content-Type": "application/json",
     "X-Requested-By": "XMLHttpRequest"
   }
 });
 
-/* const API = axios.create({
-  baseURL: "/api",
-  headers: {
-    "Content-Type": "application/json",
-    "X-Requested-By": "XMLHttpRequest"
-  }
-}); */
+
 
 export const login = async (email, senha) => {
   const data = new URLSearchParams();
