@@ -98,16 +98,19 @@ export const buscarOrgaos = async (token) => {
 
   try {
     const response = await API.get(url, {
-      headers: {
-        Authorization: `AR-JWT ${token}`
+      headers: { Authorization: `AR-JWT ${token}` },
+      paramsSerializer: params => {
+        // Não deixa o Axios codificar nada
+        return params.q;
       }
     });
-    return response.data; 
+    return response.data;
   } catch (error) {
-    console.error("Erro ao buscar órgãos", error);
+    console.error("Erro ao buscar órgãos", error.response?.data || error);
     throw new Error("Erro ao buscar órgãos");
   }
 };
+
 
 export const validarEmailExistente = async (token, email) => {
   try {
