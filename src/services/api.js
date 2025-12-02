@@ -93,23 +93,22 @@ export const criarNovaSenha = async (token, body) => {
   }
 };
 
-export const buscarOrgaos = async (token) => {
-  const url = `/arsys/v1/entry/COM:Company Alias LookUp?q='Company Abbreviation'="Órgãos" AND 'Status' = "Enabled"`;
+export const buscarOrgaos = async (token, companyAbbreviation = "Órgãos", status = "Enabled") => {
+  const query = `'Company Abbreviation'="${companyAbbreviation}" AND 'Status'="${status}"`;
+  const url = `/arsys/v1/entry/IPLAN%3ACOM%3ACompanyAliasLookUp?q=${encodeURIComponent(query)}`;
 
   try {
     const response = await API.get(url, {
-      headers: { Authorization: `AR-JWT ${token}` },
-      paramsSerializer: params => {
-        // Não deixa o Axios codificar nada
-        return params.q;
-      }
+      headers: { Authorization: `AR-JWT ${token}` }
     });
+
     return response.data;
   } catch (error) {
     console.error("Erro ao buscar órgãos", error.response?.data || error);
     throw new Error("Erro ao buscar órgãos");
   }
 };
+
 
 
 export const validarEmailExistente = async (token, email) => {
